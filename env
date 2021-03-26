@@ -1,0 +1,9 @@
+[proxy]
+
+[proxy.a]
+path=/a
+pass=http://127.0.0.1:9091
+
+[proxy.b]
+path=/b
+pass=http://127.0.0.1:9092

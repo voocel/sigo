@@ -40,12 +40,10 @@ func (ProxyHandle) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//
 	//w.Write([]byte("default index"))
 
-	lb := util.NewLoadBalance()
-	lb.AddServer(util.NewHttpServer("http://127.0.0.1:9091", 1))
-	lb.AddServer(util.NewHttpServer("http://127.0.0.1:9092", 5))
 	//myurl, _ := url.Parse(lb.SelectByRand().Host)
 	//myurl, _ := url.Parse(lb.SelectByIPHash(r.RemoteAddr).Host)
-	myurl, _ := url.Parse(lb.SelectByWeightRand2().Host)
+	//myurl, _ := url.Parse(lb.SelectByWeightRand2().Host)
+	myurl, _ := url.Parse(util.LB.RoundRobin().Host)
 	proxy := httputil.NewSingleHostReverseProxy(myurl)
 	proxy.ServeHTTP(w, r)
 }

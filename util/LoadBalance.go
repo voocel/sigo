@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var LB *LoadBalance
+
 type HttpServer struct {
 	Host   string
 	Weight int
@@ -17,12 +19,22 @@ func NewHttpServer(host string, weight int) *HttpServer {
 }
 
 type LoadBalance struct {
-	Servers []*HttpServer
+	Servers  []*HttpServer
+	CurIndex int // 指向当前服务器索引
+}
+
+func init(){
+	LB = NewLoadBalance()
+	LB.AddServer(NewHttpServer("http://127.0.0.1:9091", 1))
+	LB.AddServer(NewHttpServer("http://127.0.0.1:9092", 5))
+	LB.AddServer(NewHttpServer("http://127.0.0.1:9093", 5))
 }
 
 func NewLoadBalance() *LoadBalance {
+	fmt.Println("初始化lb")
 	return &LoadBalance{
 		Servers: make([]*HttpServer, 0),
+		CurIndex: 0,
 	}
 }
 
@@ -30,17 +42,20 @@ func (lb *LoadBalance) AddServer(server *HttpServer) {
 	lb.Servers = append(lb.Servers, server)
 }
 
-func (lb *LoadBalance) SelectByRand() *HttpServer { // 随机算法
+// 随机算法
+func (lb *LoadBalance) SelectByRand() *HttpServer {
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Intn(len(lb.Servers))
 	return lb.Servers[index]
 }
 
-func (lb *LoadBalance) SelectByIPHash(ip string) *HttpServer { // IP Hash
+// IP Hash
+func (lb *LoadBalance) SelectByIPHash(ip string) *HttpServer {
 	index := int(crc32.ChecksumIEEE([]byte(ip))) % len(lb.Servers)
 	return lb.Servers[index]
 }
 
+// 加权随机
 func (lb *LoadBalance) SelectByWeightRand() *HttpServer {
 	rand.Seed(time.Now().UnixNano())
 	var weightSlice []int
@@ -60,6 +75,7 @@ func (lb *LoadBalance) SelectByWeightRand() *HttpServer {
 // 1 3 6
 // 2 5 1
 // 2 7 8
+// 加权随机2
 func (lb *LoadBalance) SelectByWeightRand2() *HttpServer {
 	rand.Seed(time.Now().UnixNano())
 	var sum int
@@ -75,4 +91,16 @@ func (lb *LoadBalance) SelectByWeightRand2() *HttpServer {
 		}
 	}
 	return lb.Servers[0]
+}
+
+// 轮询
+func (lb *LoadBalance) RoundRobin() *HttpServer {
+	server := lb.Servers[lb.CurIndex]
+	//lb.CurIndex++
+	//if lb.CurIndex >= len(lb.Servers) {
+	//	lb.CurIndex = 0
+	//}
+	lb.CurIndex = (lb.CurIndex + 1) % len(lb.Servers)
+
+	return server
 }

@@ -1,12 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"gate/util"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 )
+
+type Endpoint struct {
+	Host string
+	Port int
+}
+
+func (e *Endpoint) String() string {
+	return fmt.Sprintf("%s:%d", e.Host, e.Port)
+}
 
 type ProxyHandle struct{}
 
